@@ -1,17 +1,7 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	"os/exec"
-)
+import "gog/cmd"
 
 func main() {
-	cmd := exec.Command("ls", "-la")
-	output, err := cmd.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(string(output))
-
+	cmd.Execute()
 }
