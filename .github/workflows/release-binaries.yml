@@ -3,6 +3,11 @@ name: Release Binaries
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach binaries to"
+        required: true
 
 permissions:
   contents: write
@@ -25,13 +30,14 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           set -euo pipefail
           out="gog"
           if [ "$GOOS" = "windows" ]; then out="gog.exe"; fi
           go build -ldflags="-s -w" -o "$out" .
 
-          archive="gog_${{ github.event.release.tag_name }}_${GOOS}_${GOARCH}"
+          archive="gog_${TAG}_${GOOS}_${GOARCH}"
           if [ "$GOOS" = "windows" ]; then
             zip "${archive}.zip" "$out"
             echo "ASSET=${archive}.zip" >> "$GITHUB_ENV"
@@ -40,6 +46,6 @@ jobs:
             echo "ASSET=${archive}.tar.gz" >> "$GITHUB_ENV"
           fi
       - name: Upload release asset
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.ASSET }}" --clobber
+        run: gh release upload "${{ github.event.release.tag_name || inputs.tag }}" "${{ env.ASSET }}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
